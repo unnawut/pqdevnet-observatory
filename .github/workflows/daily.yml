@@ -74,6 +74,8 @@ jobs:
           CLICKHOUSE_USER: ${{ secrets.CLICKHOUSE_USER }}
           CLICKHOUSE_PASSWORD: ${{ secrets.CLICKHOUSE_PASSWORD }}
         run: |
+          echo "CLICKHOUSE_HOST is set: $( [ -n \"$CLICKHOUSE_HOST\" ] && echo 'yes' || echo 'no' )"
+          echo "CLICKHOUSE_USER is set: $( [ -n \"$CLICKHOUSE_USER\" ] && echo 'yes' || echo 'no' )"
           TARGET_DATE="${{ steps.date.outputs.target }}"
           OUTPUT_DIR="../daily/$TARGET_DATE"
           mkdir -p "$OUTPUT_DIR"
