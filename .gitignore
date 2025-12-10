@@ -17,7 +17,22 @@ wheels/
 
 **/*.ignore
 
-validators/
+# Quarto build output
+_site/
+.quarto/
+_freeze/
+
+# Jupyter checkpoints
+**/.ipynb_checkpoints/
+
+# Jupyter Book (legacy)
+_build/
+site/_build/
+
+# Local data cache (data branch has the canonical data)
+notebooks/data/
 
 .DS_Store
 .idea
+/.quarto/
+**/*.quarto_ipynb
