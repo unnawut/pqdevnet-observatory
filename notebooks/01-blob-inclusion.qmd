@@ -36,7 +36,7 @@ fig = px.scatter(
     color_continuous_scale="YlOrRd",
     title="Blobs per slot",
     labels={"time": "Time", "blob_count": "Blob Count"},
-    template="plotly_dark",
+    template="plotly",
 )
 fig.update_layout(
     showlegend=False,
