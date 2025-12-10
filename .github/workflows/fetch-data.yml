@@ -56,17 +56,16 @@ jobs:
           CLICKHOUSE_USER: ${{ secrets.CLICKHOUSE_USER }}
           CLICKHOUSE_PASSWORD: ${{ secrets.CLICKHOUSE_PASSWORD }}
         run: |
+          mkdir -p data
           uv run python scripts/fetch_data.py \
             --date "${{ steps.date.outputs.target }}" \
-            --output-dir . \
+            --output-dir data \
             --max-days 30
 
       - name: Commit data to data branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          # Only add data files, not scripts
-          git add manifest.json
-          git add 20*/ 2>/dev/null || true
+          git add data/
           git commit -m "Data for ${{ steps.date.outputs.target }}" || echo "No changes to commit"
           git push origin data

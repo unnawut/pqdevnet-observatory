@@ -37,11 +37,12 @@ jobs:
       - name: Setup data directory
         run: |
           mkdir -p notebooks/data
-          if [ -d "data-checkout" ] && [ -f "data-checkout/manifest.json" ]; then
-            cp -r data-checkout/* notebooks/data/
+          if [ -d "data-checkout/data" ] && [ -f "data-checkout/data/manifest.json" ]; then
+            cp -r data-checkout/data/* notebooks/data/
           else
             echo '{"dates": [], "latest": null}' > notebooks/data/manifest.json
           fi
+          rm -rf data-checkout
 
       - name: Install uv
         uses: astral-sh/setup-uv@v4
