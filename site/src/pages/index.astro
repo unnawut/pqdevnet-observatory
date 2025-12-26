@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import Icon from '@/components/Icon.astro';
-import { getNotebooks, getLatestDate, type NotebookConfig } from '@/lib/data';
+import { getNotebooks, getLatestDate } from '@/lib/data';
 import { formatDisplayDate } from '@/lib/utils';
 
 // Load data
@@ -12,7 +12,7 @@ const latestDate = getLatestDate() || 'No data yet';
 <BaseLayout title="Home">
   <div class="max-w-3xl">
     <!-- Hero Section -->
-    <header class="mb-16 animate-[fadeUp_0.6s_ease-out]">
+    <header class="mb-16">
       <div class="text-muted-foreground bg-muted mb-6 inline-flex items-center gap-2 px-3 py-1.5 font-mono text-[0.6875rem] tracking-widest uppercase">
         <span class="bg-accent h-1.5 w-1.5 animate-pulse"></span>
         <span>Updated {latestDate === 'No data yet' ? latestDate : formatDisplayDate(latestDate)}</span>
@@ -32,7 +32,7 @@ const latestDate = getLatestDate() || 'No data yet';
         <h2 class="m-0 font-serif text-2xl font-normal -tracking-tight">Latest Analyses</h2>
         <span class="text-muted-foreground bg-muted px-2.5 py-1 font-mono text-[0.625rem] tracking-wide uppercase">{notebooks.length} notebooks</span>
       </div>
-      <div class="reveal-stagger flex flex-col gap-3">
+      <div class="flex flex-col gap-3">
         {
           notebooks.map((nb, index) => (
             <a
