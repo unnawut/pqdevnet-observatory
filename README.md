@@ -2,6 +2,14 @@
 
 Real-time insights into Ethereum's peer-to-peer layer. Tracking blob propagation, node connectivity, and network health across mainnet.
 
+## Requirements
+To successfully test out the reports locally and to extend the repo with new ones, there are a few expected dependencies before starting the Quickstart chapter:
+- `just`: a cross-platform command runner alternative to `make` ([link](https://github.com/casey/just))
+- `pnpm`: a dependency manager alternative to `npm` ([link](https://github.com/pnpm/pnpm))
+- `python` on its `v3.13` or higher 
+- `uv`: a python package manager ([link](https://github.com/astral-sh/uv))
+
+
 ## Quickstart
 
 ```bash
