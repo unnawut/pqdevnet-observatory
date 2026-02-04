@@ -18,6 +18,7 @@ dependencies = [
     "boto3>=1.35.0",
     "scipy>=1.16.3",
     "statsmodels>=0.14.6",
+    "prometheus-api-client>=0.5.5",
 ]
 
 [dependency-groups]
