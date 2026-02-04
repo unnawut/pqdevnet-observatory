@@ -5,11 +5,11 @@ version: "1.0"
 
 # Notebook Registry
 notebooks:
-  - id: lean-01-pq-signature-performance
+  - id: 01-pq-signature-performance
     title: PQ Signature Performance
     description: Post-quantum cryptographic signature timing analysis
     icon: Key
-    source: notebooks/lean-01-pq-signature-performance.ipynb
+    source: notebooks/lean/01-pq-signature-performance.ipynb
     order: 1
 
 # Settings
