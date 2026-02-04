@@ -9,7 +9,7 @@ Data is organized by devnet iteration (not by date like upstream) since devnets
 are ephemeral and may last hours to days.
 
 Usage:
-    python fetch_data_prometheus.py --devnet devnet-001   # Fetch specific devnet
+    python fetch_data_prometheus.py --devnet pqdevnet-001   # Fetch specific devnet
     python fetch_data_prometheus.py --devnet all          # Fetch all devnets
     python fetch_data_prometheus.py --list-metrics        # List available lean_* metrics
     python fetch_data_prometheus.py --list-queries        # List available query IDs
@@ -652,7 +652,7 @@ def update_manifest(
     # Find all devnet directories
     all_devnets = set()
     for d in output_dir.iterdir():
-        if d.is_dir() and d.name.startswith("devnet-"):
+        if d.is_dir() and d.name.startswith("pqdevnet-"):
             all_devnets.add(d.name)
     manifest["devnets"] = sorted(all_devnets)
 
@@ -666,7 +666,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Fetch data from Prometheus")
     parser.add_argument(
         "--devnet",
-        help="Devnet ID to fetch (e.g., devnet-001) or 'all' for all devnets",
+        help="Devnet ID to fetch (e.g., pqdevnet-001) or 'all' for all devnets",
     )
     parser.add_argument("--output-dir", default="notebooks/data")
     parser.add_argument("--prometheus-url", help="Prometheus URL (or set PROMETHEUS_URL env)")

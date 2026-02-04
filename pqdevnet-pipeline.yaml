@@ -1,5 +1,5 @@
-# Lean Consensus Pipeline Configuration
-# Fork-specific config for Lean Consensus notebooks (separate from upstream pipeline.yaml)
+# PQ Devnet Pipeline Configuration
+# Fork-specific config for PQ Devnet notebooks (separate from upstream pipeline.yaml)
 
 version: "1.0"
 
@@ -9,7 +9,7 @@ notebooks:
     title: PQ Signature Performance
     description: Post-quantum cryptographic signature timing analysis
     icon: Key
-    source: notebooks/lean/01-pq-signature-performance.ipynb
+    source: notebooks/pqdevnet/01-pq-signature-performance.ipynb
     order: 1
 
 # Settings

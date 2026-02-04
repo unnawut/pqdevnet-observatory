@@ -46,36 +46,36 @@ show-hashes:
     uv run python scripts/pipeline.py query-hashes
 
 # ============================================
-# Data Pipeline (Lean Consensus Devnet)
+# Data Pipeline (PQ Devnet)
 # ============================================
 
 # Detect devnet iterations from Prometheus
 detect-devnets days="7":
-    uv run python scripts/lean/detect_devnets.py --days {{ days }}
+    uv run python scripts/pqdevnet/detect_devnets.py --days {{ days }}
 
 # Fetch data for a devnet (e.g., devnet-001) or "all" devnets
 fetch-devnet devnet query="":
-    uv run python scripts/lean/fetch_data_prometheus.py --output-dir notebooks/data \
+    uv run python scripts/pqdevnet/fetch_data_prometheus.py --output-dir notebooks/data \
         --devnet {{ devnet }} \
         {{ if query != "" { "--query " + query } else { "" } }}
 
 # List detected devnets
 list-devnets:
-    uv run python scripts/lean/fetch_data_prometheus.py --list-devnets
+    uv run python scripts/pqdevnet/fetch_data_prometheus.py --list-devnets
 
-# List available Lean Consensus metrics from Prometheus
+# List available PQ Devnet metrics from Prometheus
 list-prometheus-metrics:
-    uv run python scripts/lean/fetch_data_prometheus.py --list-metrics
+    uv run python scripts/pqdevnet/fetch_data_prometheus.py --list-metrics
 
 # List available Prometheus queries
 list-prometheus-queries:
-    uv run python scripts/lean/fetch_data_prometheus.py --list-queries
+    uv run python scripts/pqdevnet/fetch_data_prometheus.py --list-queries
 
-# Render Lean notebooks for a devnet (e.g., devnet-005) or "all"
+# Render PQ Devnet notebooks for a devnet (e.g., devnet-005) or "all"
 render-devnet devnet:
-    uv run python scripts/lean/render_notebooks.py --devnet {{ devnet }}
+    uv run python scripts/pqdevnet/render_notebooks.py --devnet {{ devnet }}
 
-# Full Lean pipeline: detect + fetch + render for a devnet
+# Full PQ Devnet pipeline: detect + fetch + render for a devnet
 sync-devnet devnet:
     just detect-devnets
     just fetch-devnet {{ devnet }}

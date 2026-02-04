@@ -3,7 +3,7 @@
 import Icon from './Icon.astro';
 
 interface Props {
-  currentDevnet: string; // e.g., "devnet-005"
+  currentDevnet: string; // e.g., "pqdevnet-005"
   notebookId: string;
   availableDevnets: string[];
 }
@@ -23,17 +23,17 @@ const nextDevnet = currentIndex < availableDevnets.length - 1 ? availableDevnets
 const base = import.meta.env.BASE_URL;
 const buildUrl = (devnet: string | null) => {
   if (!devnet) return null;
-  return `${base}devnet/${devnet}/${notebookId}`;
+  return `${base}pqdevnet/${devnet}/${notebookId}`;
 };
 
 const prevUrl = buildUrl(prevDevnet);
 const nextUrl = buildUrl(nextDevnet);
 
-// Format devnet ID for display (e.g., "devnet-005" -> "Devnet 005")
+// Format devnet ID for display (e.g., "pqdevnet-005" -> "PQ Devnet 005")
 const formatDevnetDisplay = (id: string) => {
-  const match = id.match(/devnet-(\d+)/);
+  const match = id.match(/pqdevnet-(\d+)/);
   if (match) {
-    return `Devnet ${match[1]}`;
+    return `PQ Devnet ${match[1]}`;
   }
   return id;
 };
@@ -57,7 +57,7 @@ const formatDevnetDisplay = (id: string) => {
   <div class="flex items-center gap-3">
     <div class="flex items-center gap-1.5 border-r border-white/10 pr-3 font-mono text-[0.625rem] tracking-widest text-white/40 uppercase">
       <Icon name="Box" size={12} />
-      <span class="hidden sm:inline">Lean</span>
+      <span class="hidden sm:inline">PQ</span>
     </div>
     <div class="flex items-center gap-2.5">
       <span class="font-serif text-[0.9375rem] font-normal -tracking-tight text-white/90">

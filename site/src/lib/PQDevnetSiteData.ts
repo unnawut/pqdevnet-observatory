@@ -2,7 +2,7 @@ import yaml from 'js-yaml';
 import fs from 'node:fs';
 import path from 'node:path';
 
-export interface LeanNotebookConfig {
+export interface PQDevnetNotebookConfig {
     id: string;
     title: string;
     description?: string;
@@ -11,22 +11,22 @@ export interface LeanNotebookConfig {
     icon?: string;
 }
 
-export interface LeanNotebookData {
+export interface PQDevnetNotebookData {
     html_path: string;
     rendered_at?: string;
     notebook_hash?: string;
     data_hash?: string;
 }
 
-export interface LeanManifest {
+export interface PQDevnetManifest {
     latest_devnet?: string;
-    devnets?: Record<string, Record<string, LeanNotebookData>>;
+    devnets?: Record<string, Record<string, PQDevnetNotebookData>>;
     updated_at?: string;
 }
 
-export interface LeanPipelineConfig {
+export interface PQDevnetPipelineConfig {
     version?: string;
-    notebooks: LeanNotebookConfig[];
+    notebooks: PQDevnetNotebookConfig[];
     settings?: {
         data_dir?: string;
         rendered_dir?: string;
@@ -35,28 +35,28 @@ export interface LeanPipelineConfig {
 }
 
 /**
- * Data access for Lean Consensus devnet notebooks.
+ * Data access for PQ Devnet notebooks.
  * Separate from SiteData to avoid conflicts with upstream.
  */
-export class LeanSiteData {
-    private readonly manifest: LeanManifest;
-    private readonly config: LeanPipelineConfig;
+export class PQDevnetSiteData {
+    private readonly manifest: PQDevnetManifest;
+    private readonly config: PQDevnetPipelineConfig;
 
-    private constructor(manifest: LeanManifest, config: LeanPipelineConfig) {
+    private constructor(manifest: PQDevnetManifest, config: PQDevnetPipelineConfig) {
         this.manifest = manifest;
         this.config = config;
     }
 
     /**
-     * Load Lean site data from filesystem.
+     * Load PQ Devnet site data from filesystem.
      */
-    static load(): LeanSiteData {
-        const manifest = LeanSiteData.loadManifest();
-        const config = LeanSiteData.loadConfig();
-        return new LeanSiteData(manifest, config);
+    static load(): PQDevnetSiteData {
+        const manifest = PQDevnetSiteData.loadManifest();
+        const config = PQDevnetSiteData.loadConfig();
+        return new PQDevnetSiteData(manifest, config);
     }
 
-    private static loadManifest(): LeanManifest {
+    private static loadManifest(): PQDevnetManifest {
         const manifestPath = path.join(process.cwd(), 'rendered', 'manifest.json');
         try {
             if (fs.existsSync(manifestPath)) {
@@ -64,18 +64,18 @@ export class LeanSiteData {
                 return JSON.parse(content);
             }
         } catch (e) {
-            console.error('Failed to load Lean manifest.json', e);
+            console.error('Failed to load PQ Devnet manifest.json', e);
         }
         return { devnets: {} };
     }
 
-    private static loadConfig(): LeanPipelineConfig {
-        const configPath = path.join(process.cwd(), '..', 'lean-pipeline.yaml');
+    private static loadConfig(): PQDevnetPipelineConfig {
+        const configPath = path.join(process.cwd(), '..', 'pqdevnet-pipeline.yaml');
         try {
             const configContent = fs.readFileSync(configPath, 'utf-8');
-            return yaml.load(configContent) as LeanPipelineConfig;
+            return yaml.load(configContent) as PQDevnetPipelineConfig;
         } catch (e) {
-            console.error('Failed to load lean-pipeline.yaml', e);
+            console.error('Failed to load pqdevnet-pipeline.yaml', e);
             return { notebooks: [] };
         }
     }
@@ -97,12 +97,12 @@ export class LeanSiteData {
     }
 
     /** Notebook configs sorted by order */
-    get notebooks(): LeanNotebookConfig[] {
+    get notebooks(): PQDevnetNotebookConfig[] {
         return [...this.config.notebooks].sort((a, b) => (a.order || 0) - (b.order || 0));
     }
 
     /** Get notebook data for a specific devnet and notebook ID */
-    getNotebookData(devnetId: string, notebookId: string): LeanNotebookData | undefined {
+    getNotebookData(devnetId: string, notebookId: string): PQDevnetNotebookData | undefined {
         return this.manifest.devnets?.[devnetId]?.[notebookId];
     }
 
@@ -112,39 +112,39 @@ export class LeanSiteData {
     }
 
     /** Get notebook config by ID */
-    getNotebook(id: string): LeanNotebookConfig | undefined {
+    getNotebook(id: string): PQDevnetNotebookConfig | undefined {
         return this.config.notebooks.find((n) => n.id === id);
     }
 
-    /** Check if there's any Lean data available */
+    /** Check if there's any PQ Devnet data available */
     get hasData(): boolean {
         return this.availableDevnets.length > 0;
     }
 }
 
 // Singleton instance for helper function compatibility
-let leanSiteDataInstance: LeanSiteData | null = null;
+let pqDevnetSiteDataInstance: PQDevnetSiteData | null = null;
 
-function getLeanSiteData(): LeanSiteData {
-    if (!leanSiteDataInstance) {
-        leanSiteDataInstance = LeanSiteData.load();
+function getPQDevnetSiteData(): PQDevnetSiteData {
+    if (!pqDevnetSiteDataInstance) {
+        pqDevnetSiteDataInstance = PQDevnetSiteData.load();
     }
-    return leanSiteDataInstance;
+    return pqDevnetSiteDataInstance;
 }
 
 // Helper functions
-export function getLeanNotebooks(): LeanNotebookConfig[] {
-    return getLeanSiteData().notebooks;
+export function getPQDevnetNotebooks(): PQDevnetNotebookConfig[] {
+    return getPQDevnetSiteData().notebooks;
 }
 
 export function getLatestDevnet(): string {
-    return getLeanSiteData().latestDevnet;
+    return getPQDevnetSiteData().latestDevnet;
 }
 
 export function getAvailableDevnets(): string[] {
-    return getLeanSiteData().availableDevnets;
+    return getPQDevnetSiteData().availableDevnets;
 }
 
-export function hasLeanData(): boolean {
-    return getLeanSiteData().hasData;
+export function hasPQDevnetData(): boolean {
+    return getPQDevnetSiteData().hasData;
 }

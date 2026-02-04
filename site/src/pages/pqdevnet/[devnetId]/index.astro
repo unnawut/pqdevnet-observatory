@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import Icon from '@/components/Icon.astro';
-import { LeanSiteData, getLeanNotebooks, getAvailableDevnets } from '@/lib/LeanSiteData';
+import { PQDevnetSiteData, getPQDevnetNotebooks, getAvailableDevnets } from '@/lib/PQDevnetSiteData';
 
 export function getStaticPaths() {
   const devnets = getAvailableDevnets();
@@ -11,32 +11,32 @@ export function getStaticPaths() {
 }
 
 const { devnetId } = Astro.params;
-const leanData = LeanSiteData.load();
-const notebooks = leanData.notebooks;
+const pqDevnetData = PQDevnetSiteData.load();
+const notebooks = pqDevnetData.notebooks;
 
-if (!leanData.hasDevnet(devnetId!)) {
+if (!pqDevnetData.hasDevnet(devnetId!)) {
   return Astro.redirect('/404');
 }
 
 const base = import.meta.env.BASE_URL;
-const isLatest = devnetId === leanData.latestDevnet;
+const isLatest = devnetId === pqDevnetData.latestDevnet;
 
 // Format devnet ID for display
 const formatDevnetDisplay = (id: string) => {
-  const match = id.match(/devnet-(\d+)/);
+  const match = id.match(/pqdevnet-(\d+)/);
   if (match) {
-    return `Devnet ${match[1]}`;
+    return `PQ Devnet ${match[1]}`;
   }
   return id;
 };
 ---
 
-<BaseLayout title={`Lean Consensus - ${formatDevnetDisplay(devnetId!)}`} description="Lean Consensus metrics analysis">
+<BaseLayout title={`PQ Devnet - ${formatDevnetDisplay(devnetId!)}`} description="PQ Devnet metrics analysis">
   <div class="mx-auto max-w-4xl">
     <header class="mb-8">
       <div class="flex items-center gap-3 mb-2">
         <span class="bg-primary text-primary-foreground px-2 py-1 text-xs font-mono uppercase tracking-wider">
-          Lean Consensus
+          PQ Devnet
         </span>
         {isLatest && (
           <span class="border border-primary/30 text-primary px-2 py-1 text-xs font-mono uppercase tracking-wider">
@@ -58,9 +58,9 @@ const formatDevnetDisplay = (id: string) => {
       </h2>
       <ul class="space-y-2">
         {notebooks.map((nb) => {
-          const notebookData = leanData.getNotebookData(devnetId!, nb.id);
+          const notebookData = pqDevnetData.getNotebookData(devnetId!, nb.id);
           const hasRendered = !!notebookData;
-          const href = hasRendered ? `${base}devnet/${devnetId}/${nb.id}` : null;
+          const href = hasRendered ? `${base}pqdevnet/${devnetId}/${nb.id}` : null;
 
           return (
             <li>

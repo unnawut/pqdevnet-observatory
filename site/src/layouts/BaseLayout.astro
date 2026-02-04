@@ -13,7 +13,7 @@ interface Props {
   headings?: MarkdownHeading[];
 }
 
-const { title, description = 'Lean Consensus Observatory', headings = [] } = Astro.props;
+const { title, description = 'PQ Devnet Observatory', headings = [] } = Astro.props;
 
 const siteData = SiteData.load();
 const base = import.meta.env.BASE_URL;
@@ -27,7 +27,7 @@ const base = import.meta.env.BASE_URL;
     <meta name="description" content={description} />
     <meta name="theme-color" content="#f8f7fc" />
     <link rel="icon" type="image/svg+xml" href={`${base}favicon.svg`} />
-    <title>{title} | Lean Consensus Observatory</title>
+    <title>{title} | PQ Devnet Observatory</title>
   </head>
   <body class="min-h-screen">
     <!-- Mobile navigation -->
@@ -50,7 +50,7 @@ const base = import.meta.env.BASE_URL;
               </svg>
             </span>
             <span class="flex flex-col leading-tight">
-              <span class="text-foreground font-mono text-[0.8125rem] font-bold tracking-wide">Lean Consensus</span>
+              <span class="text-foreground font-mono text-[0.8125rem] font-bold tracking-wide">PQ Devnet</span>
               <span class="text-muted-foreground font-serif text-sm -tracking-tight">Observatory</span>
             </span>
           </a>

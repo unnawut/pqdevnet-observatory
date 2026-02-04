@@ -6,9 +6,9 @@ Executes notebooks with papermill (with devnet_id parameter) and converts to HTM
 This is the fork-specific rendering script for devnet-based notebooks.
 
 Usage:
-    python render_notebooks.py --devnet devnet-005
+    python render_notebooks.py --devnet pqdevnet-005
     python render_notebooks.py --devnet all
-    python render_notebooks.py --devnet devnet-005 --notebook lean-01-pq-signature-performance
+    python render_notebooks.py --devnet pqdevnet-005 --notebook 01-pq-signature-performance
 """
 
 import argparse
@@ -35,7 +35,7 @@ DATA_ROOT = Path("notebooks/data")
 OUTPUT_DIR = Path("site/rendered")
 MANIFEST_PATH = OUTPUT_DIR / "manifest.json"
 TEMPLATE_DIR = Path("notebooks/templates")
-LEAN_CONFIG_PATH = Path("lean-pipeline.yaml")
+LEAN_CONFIG_PATH = Path("pqdevnet-pipeline.yaml")
 
 
 def load_lean_config() -> dict:
@@ -271,7 +271,7 @@ def main() -> None:
     parser.add_argument(
         "--devnet",
         required=True,
-        help="Devnet ID to render (e.g., devnet-005) or 'all' for all devnets",
+        help="Devnet ID to render (e.g., pqdevnet-005) or 'all' for all devnets",
     )
     parser.add_argument(
         "--output-dir",

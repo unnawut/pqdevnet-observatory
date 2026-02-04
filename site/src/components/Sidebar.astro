@@ -2,7 +2,7 @@
 import Icon from '@/components/Icon.astro';
 import { toPathDate, formatShortDate } from '@/lib/utils';
 import type { SiteData } from '@/lib/SiteData';
-import { LeanSiteData } from '@/lib/LeanSiteData';
+import { PQDevnetSiteData } from '@/lib/PQDevnetSiteData';
 
 interface Props {
   siteData: SiteData;
@@ -14,15 +14,15 @@ const notebooks = siteData.notebooks;
 const latestDate = siteData.latestDate || 'No data';
 const historicalDates = siteData.historicalDates;
 
-// Load Lean Consensus data
-const leanData = LeanSiteData.load();
-const leanNotebooks = leanData.notebooks;
-const latestDevnet = leanData.latestDevnet;
-const historicalDevnets = leanData.historicalDevnets;
+// Load PQ Devnet data
+const pqDevnetData = PQDevnetSiteData.load();
+const pqDevnetNotebooks = pqDevnetData.notebooks;
+const latestDevnet = pqDevnetData.latestDevnet;
+const historicalDevnets = pqDevnetData.historicalDevnets;
 
 // Format devnet ID for display
 const formatDevnetShort = (id: string) => {
-  const match = id.match(/devnet-(\d+)/);
+  const match = id.match(/pqdevnet-(\d+)/);
   return match ? match[1] : id;
 };
 
@@ -31,7 +31,7 @@ const base = import.meta.env.BASE_URL;
 ---
 
 <nav class="flex flex-col gap-5">
-  <!-- Latest Section (hidden for Lean fork) -->
+  <!-- Latest Section (hidden for PQ Devnet fork) -->
   <div class="hidden flex-col gap-1">
     <div class="mb-0.5 flex items-center justify-between px-2">
       <span class="text-muted-foreground text-[0.625rem] font-semibold tracking-wide uppercase">Latest</span>
@@ -69,7 +69,7 @@ const base = import.meta.env.BASE_URL;
     </ul>
   </div>
 
-  <!-- Previous Snapshots Section (hidden for Lean fork) -->
+  <!-- Previous Snapshots Section (hidden for PQ Devnet fork) -->
   {
     historicalDates.length > 0 && (
       <div class="hidden flex-col gap-1">
@@ -107,9 +107,9 @@ const base = import.meta.env.BASE_URL;
     )
   }
 
-  <!-- Lean Consensus Section -->
+  <!-- PQ Devnet Section -->
   {
-    leanData.hasData && (
+    pqDevnetData.hasData && (
       <div class="flex flex-col gap-1">
         <div class="mb-0.5 flex items-center justify-between px-2">
           <span class="text-muted-foreground text-[0.625rem] font-semibold tracking-wide uppercase">Latest</span>
@@ -121,9 +121,9 @@ const base = import.meta.env.BASE_URL;
           )}
         </div>
         <ul class="m-0 flex list-none flex-col p-0">
-          {leanNotebooks.map((nb) => {
-            const href = `${base}devnet/${latestDevnet}/${nb.id}`;
-            const isActive = currentPath.includes(`/devnet/`) && currentPath.includes(`/${nb.id}`);
+          {pqDevnetNotebooks.map((nb) => {
+            const href = `${base}pqdevnet/${latestDevnet}/${nb.id}`;
+            const isActive = currentPath.includes(`/pqdevnet/`) && currentPath.includes(`/${nb.id}`);
             return (
               <li>
                 <a
@@ -159,8 +159,8 @@ const base = import.meta.env.BASE_URL;
         </div>
         <ul class="m-0 flex list-none flex-col p-0">
           {historicalDevnets.map((devnet) => {
-            const href = `${base}devnet/${devnet}`;
-            const isActive = currentPath.startsWith(`/devnet/${devnet}`);
+            const href = `${base}pqdevnet/${devnet}`;
+            const isActive = currentPath.startsWith(`/pqdevnet/${devnet}`);
             return (
               <li>
                 <a

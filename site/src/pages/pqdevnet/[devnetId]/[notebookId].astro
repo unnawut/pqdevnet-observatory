@@ -1,10 +1,10 @@
 ---
 import DevnetLayout from '@/layouts/DevnetLayout.astro';
 import { extractHeadings } from '@/lib/extract-headings';
-import { LeanSiteData, getLeanNotebooks, getAvailableDevnets } from '@/lib/LeanSiteData';
+import { PQDevnetSiteData, getPQDevnetNotebooks, getAvailableDevnets } from '@/lib/PQDevnetSiteData';
 
 export function getStaticPaths() {
-  const notebooks = getLeanNotebooks();
+  const notebooks = getPQDevnetNotebooks();
   const devnets = getAvailableDevnets();
 
   const paths = [];
@@ -19,14 +19,14 @@ export function getStaticPaths() {
 }
 
 const { devnetId, notebookId } = Astro.params;
-const leanData = LeanSiteData.load();
-const notebook = leanData.getNotebook(notebookId!);
+const pqDevnetData = PQDevnetSiteData.load();
+const notebook = pqDevnetData.getNotebook(notebookId!);
 
 if (!notebook) {
   return Astro.redirect('/404');
 }
 
-if (!leanData.hasDevnet(devnetId!)) {
+if (!pqDevnetData.hasDevnet(devnetId!)) {
   return Astro.redirect('/404');
 }
 
