@@ -66,6 +66,36 @@ site/                  # Astro static site
 
 **Data flow:** ClickHouse -> Parquet (with hash) -> papermill/nbconvert -> HTML -> Astro build
 
+## Fork Context
+
+This repo is forked from [ethp2p/notebooks](https://github.com/ethp2p/notebooks).
+
+**Upstream purpose:** Ethereum P2P network performance analysis (block propagation, blob inclusion, etc.)
+
+**Fork purpose:** Lean Consensus metrics analysis - using the same platform infrastructure but for different data.
+
+**Metrics definition:** https://github.com/leanEthereum/leanMetrics/blob/main/metrics.md
+
+**Data source:** Prometheus (differs from upstream ClickHouse)
+
+**Key constraint:** Changes should be structured to minimize conflicts when pulling upstream updates:
+
+- **Prefer adding new files** over modifying existing ones when possible
+- **Keep query modules separate** - create new files in `queries/` for Lean Consensus queries
+- **Notebook naming** - consider prefixing fork-specific notebooks (e.g., `lc-` prefix)
+- **Infrastructure changes** - avoid modifying core scripts (`scripts/pipeline.py`, `scripts/fetch_data.py`, etc.) unless necessary
+
+**Files safe to modify (fork-specific):**
+- `pipeline.yaml` - query and notebook configuration
+- `queries/` - add new query modules
+- `notebooks/` - add new notebook files
+
+**Files to avoid modifying (shared infrastructure):**
+- `scripts/*.py` - core pipeline logic
+- `site/src/components/` - reusable UI components
+- `site/src/layouts/` - page layouts
+- `notebooks/loaders.py` - shared data loading utilities
+
 ## Rendering Pipeline: Papermill + nbconvert
 
 The project uses both Papermill and nbconvert to handle distinct steps:
