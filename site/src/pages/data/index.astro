@@ -1,22 +1,19 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import Icon from '@/components/Icon.astro';
-import { formatDisplayDate } from '@/lib/utils';
 import fs from 'node:fs';
 import path from 'node:path';
 
-// Data manifest structure
+// Data manifest structure for PQ Devnet
 interface QueryData {
   fetched_at: string;
-  query_hash: string;
   row_count: number;
   file_size_bytes: number;
 }
 
 interface DataManifest {
-  dates: string[];
-  latest: string;
-  date_queries: Record<string, Record<string, QueryData>>;
+  devnets: string[];
+  devnet_queries: Record<string, Record<string, QueryData>>;
 }
 
 // Load data manifest from notebooks/data/manifest.json
@@ -30,7 +27,7 @@ function loadDataManifest(): DataManifest {
   } catch (e) {
     console.error('Failed to load data manifest', e);
   }
-  return { dates: [], latest: '', date_queries: {} };
+  return { devnets: [], devnet_queries: {} };
 }
 
 // Format bytes to human-readable size
@@ -40,20 +37,27 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+// Format devnet ID for display
+function formatDevnetDisplay(id: string): string {
+  const match = id.match(/pqdevnet-(\d+)/);
+  return match ? `PQ Devnet ${match[1]}` : id;
+}
+
 const manifest = loadDataManifest();
 const base = import.meta.env.BASE_URL;
 
-// Sort dates newest first
-const sortedDates = [...manifest.dates].sort().reverse();
+// Sort devnets newest first (higher number = newer)
+const sortedDevnets = [...(manifest.devnets || [])].sort().reverse();
+const latestDevnet = sortedDevnets[0] || '';
 
 // Get total file count and size
 let totalFiles = 0;
 let totalSize = 0;
-for (const date of sortedDates) {
-  const queries = manifest.date_queries[date] || {};
+for (const devnet of sortedDevnets) {
+  const queries = manifest.devnet_queries?.[devnet] || {};
   for (const query of Object.values(queries)) {
     totalFiles++;
-    totalSize += query.file_size_bytes;
+    totalSize += query.file_size_bytes || 0;
   }
 }
 ---
@@ -78,21 +82,21 @@ for (const date of sortedDates) {
         <span class="text-border">|</span>
         <span>{formatFileSize(totalSize)} total</span>
         <span class="text-border">|</span>
-        <span>{sortedDates.length} dates</span>
+        <span>{sortedDevnets.length} devnets</span>
       </div>
     </header>
 
-    <!-- Data by Date -->
-    {sortedDates.map((date) => {
-      const queries = manifest.date_queries[date] || {};
+    <!-- Data by Devnet -->
+    {sortedDevnets.map((devnet) => {
+      const queries = manifest.devnet_queries?.[devnet] || {};
       const queryNames = Object.keys(queries).sort();
-      const isLatest = date === manifest.latest;
+      const isLatest = devnet === latestDevnet;
 
       return (
         <section class="mb-10">
           <div class="mb-4 flex items-center gap-3">
             <h2 class="m-0 font-serif text-xl font-normal -tracking-tight">
-              {formatDisplayDate(date)}
+              {formatDevnetDisplay(devnet)}
             </h2>
             {isLatest && (
               <span class="bg-primary text-primary-foreground px-2 py-0.5 text-[0.625rem] font-mono tracking-wide uppercase">
@@ -114,7 +118,7 @@ for (const date of sortedDates) {
                 {queryNames.map((queryName, idx) => {
                   const query = queries[queryName];
                   const filename = `${queryName}.parquet`;
-                  const downloadUrl = `${base}data/${date}/${filename}`;
+                  const downloadUrl = `${base}data/${devnet}/${filename}`;
 
                   return (
                     <tr class={`group border-border ${idx < queryNames.length - 1 ? 'border-b' : ''} hover:bg-muted/50 transition-colors`}>
@@ -146,7 +150,7 @@ for (const date of sortedDates) {
       );
     })}
 
-    {sortedDates.length === 0 && (
+    {sortedDevnets.length === 0 && (
       <div class="border-border bg-muted text-muted-foreground border p-8 text-center">
         No data files available yet.
       </div>
