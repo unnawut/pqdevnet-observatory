@@ -337,58 +337,44 @@ def detect_devnets(
     return iterations
 
 
-def fetch_container_names(
-    client: PrometheusConnect,
+def fetch_container_clients(
+    prom: PrometheusConnect,
     start_time: datetime,
     end_time: datetime,
-) -> pd.DataFrame:
-    """Fetch container names from cAdvisor to discover all running clients."""
-    result = client.custom_query_range(
-        query="rate(container_cpu_usage_seconds_total[5m])",
+) -> set[str]:
+    """Fetch client names from cAdvisor containers for a specific time period."""
+    result = prom.custom_query_range(
+        query="container_cpu_usage_seconds_total",
         start_time=start_time,
         end_time=end_time,
-        step="30m",  # Coarse step - we only need to know which containers existed
+        step="30m",
     )
 
-    rows = []
+    containers = set()
     for series in result:
         metric = series.get("metric", {})
         container = metric.get("name", metric.get("container", "unknown"))
-        if not container or container in ("", "POD"):
-            continue
-        values = series.get("values", [])
-        for ts, val in values:
-            rows.append({
-                "container": container,
-                "timestamp": datetime.fromtimestamp(ts, tz=timezone.utc),
-            })
+        if container and container not in ("", "POD"):
+            containers.add(container)
 
-    return pd.DataFrame(rows)
+    # Extract client names (e.g., "lantern_0" -> "lantern")
+    clients = set()
+    for c in containers:
+        if c in EXCLUDED_CONTAINERS or "_" not in c:
+            continue
+        clients.add(c.rsplit("_", 1)[0])
+    return clients
 
 
 def augment_clients_from_containers(
     iterations: list[DevnetIteration],
-    container_df: pd.DataFrame,
+    prom: PrometheusConnect,
 ) -> None:
     """Add clients discovered via cAdvisor containers to each devnet iteration."""
-    if container_df.empty:
-        return
-
     for iteration in iterations:
         start = datetime.fromisoformat(iteration.start_time)
         end = datetime.fromisoformat(iteration.end_time)
-        period_df = container_df[
-            (container_df["timestamp"] >= start) & (container_df["timestamp"] <= end)
-        ]
-        if period_df.empty:
-            continue
-
-        # Extract client names from container names (e.g., "lantern_0" -> "lantern")
-        container_clients = set()
-        for c in period_df["container"].unique():
-            if c in EXCLUDED_CONTAINERS or "_" not in c:
-                continue
-            container_clients.add(c.rsplit("_", 1)[0])
+        container_clients = fetch_container_clients(prom, start, end)
 
         merged = sorted(set(iteration.clients) | container_clients)
         if len(merged) > len(iteration.clients):
@@ -464,11 +450,7 @@ def main() -> None:
 
     # Augment client list with all containers visible via cAdvisor
     print("Fetching container data to discover all running clients...")
-    container_df = fetch_container_names(client, start_time, end_time)
-    if not container_df.empty:
-        augment_clients_from_containers(iterations, container_df)
-    else:
-        print("  No container data found")
+    augment_clients_from_containers(iterations, client)
 
     # Filter out short-lived devnets (likely failed runs)
     min_duration_hours = args.min_duration / 60.0

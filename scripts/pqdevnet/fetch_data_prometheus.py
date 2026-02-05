@@ -343,6 +343,8 @@ def fetch_pq_signature_timing(
     histogram_metrics = [
         ("lean_pq_signature_attestation_signing_time_seconds", "signing"),
         ("lean_pq_signature_attestation_verification_time_seconds", "verification"),
+        ("lean_pq_sig_attestation_signatures_building_time_seconds", "agg_building"),
+        ("lean_pq_sig_aggregated_signatures_verification_time_seconds", "agg_verification"),
     ]
     quantiles = [0.5, 0.95, 0.99]
 
