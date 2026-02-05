@@ -15,16 +15,23 @@ notebooks:
   - id: 03-consensus
     title: Consensus
     description: Head slot tracking, justification, and finalization analysis
-    icon: TrendingUp
+    icon: Handshake
     source: notebooks/pqdevnet/03-consensus.ipynb
     order: 2
+
+  - id: 04-networking
+    title: Networking
+    description: Peer connections, attestation propagation, bandwidth, and reorgs
+    icon: Network
+    source: notebooks/pqdevnet/04-networking.ipynb
+    order: 3
 
   - id: 02-resource-utilization
     title: Resource Utilization
     description: CPU, memory, disk I/O, and network throughput per client
     icon: Activity
     source: notebooks/pqdevnet/02-resource-utilization.ipynb
-    order: 3
+    order: 4
 
 # Settings
 settings:

@@ -415,6 +415,50 @@ def fetch_network_peers(
     return df, promql
 
 
+def fetch_peer_events(
+    client: PrometheusConnect,
+    start_time: datetime,
+    end_time: datetime,
+) -> tuple[pd.DataFrame, str]:
+    """
+    Fetch peer connection and disconnection event counters.
+
+    Metrics:
+    - lean_peer_connection_events_total
+    - lean_peer_disconnection_events_total
+    """
+    metrics = [
+        "lean_peer_connection_events_total",
+        "lean_peer_disconnection_events_total",
+    ]
+    promql = " | ".join(metrics)
+
+    rows = []
+    for metric_name in metrics:
+        result = client.custom_query_range(
+            query=metric_name,
+            start_time=start_time,
+            end_time=end_time,
+            step="1m",
+        )
+        short_name = metric_name.replace("lean_peer_", "").replace("_events_total", "")
+        for series in result:
+            metric = series.get("metric", {})
+            values = series.get("values", [])
+            for ts, val in values:
+                row = {
+                    "client": metric.get("job", "unknown"),
+                    "instance": metric.get("instance", "unknown"),
+                    "metric": short_name,
+                    "timestamp": datetime.fromtimestamp(ts, tz=timezone.utc),
+                    "value": float(val),
+                }
+                rows.append(row)
+
+    df = pd.DataFrame(rows)
+    return df, promql
+
+
 def fetch_state_transition_timing(
     client: PrometheusConnect,
     start_time: datetime,
@@ -751,6 +795,11 @@ PROMETHEUS_QUERIES = {
         "function": fetch_network_peers,
         "description": "Connected peers over time",
         "output_file": "network_peers.parquet",
+    },
+    "peer_events": {
+        "function": fetch_peer_events,
+        "description": "Peer connection and disconnection event counters",
+        "output_file": "peer_events.parquet",
     },
     "state_transition_timing": {
         "function": fetch_state_transition_timing,
