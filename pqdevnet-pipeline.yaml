@@ -12,6 +12,13 @@ notebooks:
     source: notebooks/pqdevnet/01-pq-signature-performance.ipynb
     order: 1
 
+  - id: 02-resource-utilization
+    title: Resource Utilization
+    description: CPU, memory, disk I/O, and network throughput per client
+    icon: Activity
+    source: notebooks/pqdevnet/02-resource-utilization.ipynb
+    order: 2
+
 # Settings
 settings:
   data_dir: notebooks/data

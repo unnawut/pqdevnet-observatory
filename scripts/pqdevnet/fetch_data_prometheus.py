@@ -503,6 +503,210 @@ def fetch_validators_count(
     return df, promql
 
 
+def fetch_container_cpu(
+    client: PrometheusConnect,
+    start_time: datetime,
+    end_time: datetime,
+) -> tuple[pd.DataFrame, str]:
+    """
+    Fetch CPU usage per container using cAdvisor metrics.
+
+    Uses rate() on the counter to get CPU cores used per second.
+    """
+    promql = "rate(container_cpu_usage_seconds_total[5m])"
+    result = client.custom_query_range(
+        query=promql,
+        start_time=start_time,
+        end_time=end_time,
+        step="5m",
+    )
+
+    rows = []
+    for series in result:
+        metric = series.get("metric", {})
+        container = metric.get("name", metric.get("container", "unknown"))
+        if not container or container in ("", "POD"):
+            continue
+        values = series.get("values", [])
+        for ts, val in values:
+            val_f = float(val)
+            if val_f != val_f:  # NaN check
+                continue
+            rows.append({
+                "client": metric.get("job", "unknown"),
+                "instance": metric.get("instance", "unknown"),
+                "container": container,
+                "timestamp": datetime.fromtimestamp(ts, tz=timezone.utc),
+                "value": val_f,
+            })
+
+    df = pd.DataFrame(rows)
+    return df, promql
+
+
+def fetch_container_memory(
+    client: PrometheusConnect,
+    start_time: datetime,
+    end_time: datetime,
+) -> tuple[pd.DataFrame, str]:
+    """
+    Fetch memory usage per container using cAdvisor metrics.
+
+    Metrics:
+    - container_memory_working_set_bytes: actual memory usage
+    - container_memory_rss: resident set size
+    - container_spec_memory_limit_bytes: configured memory limit
+    """
+    metrics = [
+        ("container_memory_working_set_bytes", "working_set"),
+        ("container_memory_rss", "rss"),
+        ("container_spec_memory_limit_bytes", "limit"),
+    ]
+
+    all_rows = []
+    for promql, metric_name in metrics:
+        try:
+            result = client.custom_query_range(
+                query=promql,
+                start_time=start_time,
+                end_time=end_time,
+                step="1m",
+            )
+            for series in result:
+                metric_labels = series.get("metric", {})
+                container = metric_labels.get("name", metric_labels.get("container", "unknown"))
+                if not container or container in ("", "POD"):
+                    continue
+                values = series.get("values", [])
+                for ts, val in values:
+                    val_f = float(val)
+                    if val_f != val_f:  # NaN check
+                        continue
+                    # Skip limit=0 (means no limit set)
+                    if metric_name == "limit" and val_f == 0:
+                        continue
+                    all_rows.append({
+                        "client": metric_labels.get("job", "unknown"),
+                        "instance": metric_labels.get("instance", "unknown"),
+                        "container": container,
+                        "metric": metric_name,
+                        "timestamp": datetime.fromtimestamp(ts, tz=timezone.utc),
+                        "value": val_f,
+                    })
+        except Exception:
+            pass
+
+    df = pd.DataFrame(all_rows)
+    promql_desc = ", ".join(m[0] for m in metrics)
+    return df, promql_desc
+
+
+def fetch_container_disk_io(
+    client: PrometheusConnect,
+    start_time: datetime,
+    end_time: datetime,
+) -> tuple[pd.DataFrame, str]:
+    """
+    Fetch disk I/O per container using cAdvisor metrics.
+
+    Metrics:
+    - rate(container_fs_reads_bytes_total[5m]): read throughput
+    - rate(container_fs_writes_bytes_total[5m]): write throughput
+    - container_fs_usage_bytes: disk usage
+    """
+    metrics = [
+        ("rate(container_fs_reads_bytes_total[5m])", "read_throughput", "5m"),
+        ("rate(container_fs_writes_bytes_total[5m])", "write_throughput", "5m"),
+        ("container_fs_usage_bytes", "disk_usage", "1m"),
+    ]
+
+    all_rows = []
+    for promql, metric_name, step in metrics:
+        try:
+            result = client.custom_query_range(
+                query=promql,
+                start_time=start_time,
+                end_time=end_time,
+                step=step,
+            )
+            for series in result:
+                metric_labels = series.get("metric", {})
+                container = metric_labels.get("name", metric_labels.get("container", "unknown"))
+                if not container or container in ("", "POD"):
+                    continue
+                values = series.get("values", [])
+                for ts, val in values:
+                    val_f = float(val)
+                    if val_f != val_f:  # NaN check
+                        continue
+                    all_rows.append({
+                        "client": metric_labels.get("job", "unknown"),
+                        "instance": metric_labels.get("instance", "unknown"),
+                        "container": container,
+                        "metric": metric_name,
+                        "timestamp": datetime.fromtimestamp(ts, tz=timezone.utc),
+                        "value": val_f,
+                    })
+        except Exception:
+            pass
+
+    df = pd.DataFrame(all_rows)
+    promql_desc = "rate(container_fs_reads_bytes_total[5m]), rate(container_fs_writes_bytes_total[5m]), container_fs_usage_bytes"
+    return df, promql_desc
+
+
+def fetch_container_network(
+    client: PrometheusConnect,
+    start_time: datetime,
+    end_time: datetime,
+) -> tuple[pd.DataFrame, str]:
+    """
+    Fetch network throughput per container using cAdvisor metrics.
+
+    Metrics:
+    - rate(container_network_receive_bytes_total[5m]): rx throughput
+    - rate(container_network_transmit_bytes_total[5m]): tx throughput
+    """
+    metrics = [
+        ("rate(container_network_receive_bytes_total[5m])", "rx"),
+        ("rate(container_network_transmit_bytes_total[5m])", "tx"),
+    ]
+
+    all_rows = []
+    for promql, metric_name in metrics:
+        try:
+            result = client.custom_query_range(
+                query=promql,
+                start_time=start_time,
+                end_time=end_time,
+                step="5m",
+            )
+            for series in result:
+                metric_labels = series.get("metric", {})
+                container = metric_labels.get("name", metric_labels.get("container", "unknown"))
+                if not container or container in ("", "POD"):
+                    continue
+                values = series.get("values", [])
+                for ts, val in values:
+                    val_f = float(val)
+                    if val_f != val_f:  # NaN check
+                        continue
+                    all_rows.append({
+                        "client": metric_labels.get("job", "unknown"),
+                        "instance": metric_labels.get("instance", "unknown"),
+                        "container": container,
+                        "metric": metric_name,
+                        "timestamp": datetime.fromtimestamp(ts, tz=timezone.utc),
+                        "value": val_f,
+                    })
+        except Exception:
+            pass
+
+    df = pd.DataFrame(all_rows)
+    promql_desc = "rate(container_network_receive_bytes_total[5m]), rate(container_network_transmit_bytes_total[5m])"
+    return df, promql_desc
+
+
 # ============================================
 # Query Registry
 # ============================================
@@ -557,6 +761,26 @@ PROMETHEUS_QUERIES = {
         "function": fetch_validators_count,
         "description": "Number of validators per node",
         "output_file": "validators_count.parquet",
+    },
+    "container_cpu": {
+        "function": fetch_container_cpu,
+        "description": "CPU usage per container (cores)",
+        "output_file": "container_cpu.parquet",
+    },
+    "container_memory": {
+        "function": fetch_container_memory,
+        "description": "Memory usage per container (working set, RSS, limit)",
+        "output_file": "container_memory.parquet",
+    },
+    "container_disk_io": {
+        "function": fetch_container_disk_io,
+        "description": "Disk I/O throughput and usage per container",
+        "output_file": "container_disk_io.parquet",
+    },
+    "container_network": {
+        "function": fetch_container_network,
+        "description": "Network rx/tx throughput per container",
+        "output_file": "container_network.parquet",
     },
 }
 
