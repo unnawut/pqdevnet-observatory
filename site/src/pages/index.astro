@@ -16,10 +16,10 @@ const latestDevnet = pqDevnetData.latestDevnet || 'No data yet';
 
 const base = import.meta.env.BASE_URL;
 
-// Format devnet for display
+// Format devnet for display (e.g., "pqdevnet-20260203T0100Z" -> "PQ Devnet 2026-02-03")
 const formatDevnet = (id: string) => {
-  const match = id.match(/pqdevnet-(\d+)/);
-  return match ? `PQ Devnet ${match[1]}` : id;
+  const match = id.match(/pqdevnet-(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})Z/);
+  return match ? `PQ Devnet ${match[1]}-${match[2]}-${match[3]}` : id;
 };
 ---
 

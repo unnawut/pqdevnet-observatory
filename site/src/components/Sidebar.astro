@@ -20,10 +20,10 @@ const pqDevnetNotebooks = pqDevnetData.notebooks;
 const latestDevnet = pqDevnetData.latestDevnet;
 const historicalDevnets = pqDevnetData.historicalDevnets;
 
-// Format devnet ID for display
+// Format devnet ID for display (e.g., "pqdevnet-20260203T0100Z" -> "2026-02-03")
 const formatDevnetShort = (id: string) => {
-  const match = id.match(/pqdevnet-(\d+)/);
-  return match ? match[1] : id;
+  const match = id.match(/pqdevnet-(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})Z/);
+  return match ? `${match[1]}-${match[2]}-${match[3]}` : id;
 };
 
 const currentPath = Astro.url.pathname;

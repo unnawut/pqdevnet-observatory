@@ -37,10 +37,10 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-// Format devnet ID for display
+// Format devnet ID for display (e.g., "pqdevnet-20260203T0100Z" -> "PQ Devnet 2026-02-03")
 function formatDevnetDisplay(id: string): string {
-  const match = id.match(/pqdevnet-(\d+)/);
-  return match ? `PQ Devnet ${match[1]}` : id;
+  const match = id.match(/pqdevnet-(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})Z/);
+  return match ? `PQ Devnet ${match[1]}-${match[2]}-${match[3]}` : id;
 }
 
 const manifest = loadDataManifest();

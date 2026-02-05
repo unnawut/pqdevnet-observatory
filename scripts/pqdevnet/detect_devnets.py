@@ -47,6 +47,11 @@ class DevnetIteration:
     notes: str = ""
 
 
+def devnet_id_from_timestamp(dt: datetime) -> str:
+    """Derive a deterministic devnet ID from its start timestamp."""
+    return f"pqdevnet-{dt.strftime('%Y%m%dT%H%MZ')}"
+
+
 def get_prometheus_client(url: str | None = None) -> PrometheusConnect:
     """Create a Prometheus client."""
     prometheus_url = url or os.environ.get("PROMETHEUS_URL")
@@ -214,7 +219,7 @@ def build_devnet_iterations(
             if clients:
                 iterations.append(
                     DevnetIteration(
-                        id="pqdevnet-000",
+                        id=devnet_id_from_timestamp(data_start),
                         start_time=data_start.isoformat(),
                         end_time=(first_cluster_start - timedelta(seconds=1)).isoformat(),
                         duration_hours=round(
@@ -244,7 +249,7 @@ def build_devnet_iterations(
 
         iterations.append(
             DevnetIteration(
-                id=f"pqdevnet-{len(iterations) + 1:03d}",
+                id=devnet_id_from_timestamp(iteration_start),
                 start_time=iteration_start.isoformat(),
                 end_time=iteration_end.isoformat(),
                 duration_hours=round(
@@ -304,7 +309,7 @@ def detect_devnets(
         print("No multi-client resets detected - treating as single devnet iteration")
         return [
             DevnetIteration(
-                id="pqdevnet-001",
+                id=devnet_id_from_timestamp(df["timestamp"].min()),
                 start_time=df["timestamp"].min().isoformat(),
                 end_time=df["timestamp"].max().isoformat(),
                 duration_hours=round(
@@ -402,10 +407,6 @@ def main() -> None:
     if not iterations:
         print("\nNo devnet iterations meet the minimum duration requirement.")
         return
-
-    # Re-number iterations sequentially after filtering
-    for i, devnet in enumerate(iterations):
-        devnet.id = f"pqdevnet-{i + 1:03d}"
 
     # Print summary
     print(f"\n{'=' * 60}")

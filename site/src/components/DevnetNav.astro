@@ -29,11 +29,11 @@ const buildUrl = (devnet: string | null) => {
 const prevUrl = buildUrl(prevDevnet);
 const nextUrl = buildUrl(nextDevnet);
 
-// Format devnet ID for display (e.g., "pqdevnet-005" -> "PQ Devnet 005")
+// Format devnet ID for display (e.g., "pqdevnet-20260203T0100Z" -> "PQ Devnet 2026-02-03")
 const formatDevnetDisplay = (id: string) => {
-  const match = id.match(/pqdevnet-(\d+)/);
+  const match = id.match(/pqdevnet-(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})Z/);
   if (match) {
-    return `PQ Devnet ${match[1]}`;
+    return `PQ Devnet ${match[1]}-${match[2]}-${match[3]}`;
   }
   return id;
 };
