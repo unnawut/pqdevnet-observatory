@@ -709,18 +709,22 @@ def main() -> None:
         print(f"Connecting to Prometheus at {client.url}...")
         try:
             all_metrics = client.all_metrics()
-            lean_metrics = sorted([m for m in all_metrics if m.startswith("lean_")])
-            if lean_metrics:
-                print(f"\nFound {len(lean_metrics)} lean_* metrics:\n")
-                for m in lean_metrics:
-                    print(f"  {m}")
-            else:
-                print("\nNo lean_* metrics found.")
-                print("\nAll available metrics (first 50):")
-                for m in sorted(all_metrics)[:50]:
-                    print(f"  {m}")
-                if len(all_metrics) > 50:
-                    print(f"  ... and {len(all_metrics) - 50} more")
+            sorted_metrics = sorted(all_metrics)
+
+            # Group by prefix
+            groups: dict[str, list[str]] = {}
+            for m in sorted_metrics:
+                prefix = m.split("_")[0]
+                groups.setdefault(prefix, []).append(m)
+
+            print(f"\nFound {len(all_metrics)} total metrics across {len(groups)} prefixes:\n")
+
+            # Show all groups sorted by count (largest first)
+            for prefix, metrics in sorted(groups.items(), key=lambda x: -len(x[1])):
+                print(f"  {prefix}_* ({len(metrics)} metrics)")
+                for m in metrics:
+                    print(f"    {m}")
+                print()
         except Exception as e:
             print(f"Error connecting to Prometheus: {e}")
             sys.exit(1)
