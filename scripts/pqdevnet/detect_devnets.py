@@ -85,18 +85,20 @@ def merge_devnets(
     def parse_time(iso: str) -> datetime:
         return datetime.fromisoformat(iso)
 
-    # Track which existing devnets are matched
+    # Track which existing devnets are already claimed
     matched_existing: set[str] = set()
     merged: list[DevnetIteration] = []
 
     for det in detected:
         det_start = parse_time(det.start_time)
 
-        # Find closest existing devnet within tolerance
+        # Find closest unclaimed existing devnet within tolerance
         best_match: Optional[DevnetIteration] = None
         best_delta = tolerance + timedelta(seconds=1)
 
         for ex in existing:
+            if ex.id in matched_existing:
+                continue
             ex_start = parse_time(ex.start_time)
             delta = abs(det_start - ex_start)
             if delta <= tolerance and delta < best_delta:
@@ -106,11 +108,15 @@ def merge_devnets(
         if best_match is not None:
             # Keep existing ID and start_time, update everything else
             matched_existing.add(best_match.id)
+            # Recalculate duration from the stable start_time and fresh end_time
+            stable_start = parse_time(best_match.start_time)
+            fresh_end = parse_time(det.end_time)
+            duration = round((fresh_end - stable_start).total_seconds() / 3600, 2)
             merged.append(DevnetIteration(
                 id=best_match.id,
                 start_time=best_match.start_time,
                 end_time=det.end_time,
-                duration_hours=det.duration_hours,
+                duration_hours=duration,
                 start_slot=det.start_slot,
                 end_slot=det.end_slot,
                 clients=det.clients,
