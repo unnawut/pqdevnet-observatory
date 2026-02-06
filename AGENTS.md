@@ -13,6 +13,19 @@ Ethereum P2P Observatory site that:
 
 ## Common Commands
 
+This repo has **two sets of commands**: upstream (date-based, ClickHouse) and pqdevnet (devnet-based, Prometheus). **Use the pqdevnet variants for this fork's work.**
+
+### PQ Devnet Commands (use these)
+
+```bash
+just detect-devnets                  # Detect devnet iterations from Prometheus
+just fetch-devnet <id>               # Fetch data for a devnet (or "all")
+just render-devnet <id>              # Render notebooks for a devnet (or "all")
+just sync-devnet <id>                # Full pipeline: detect + fetch + render
+```
+
+### Upstream Commands (date-based, rarely needed)
+
 ```bash
 # Development
 just dev              # Start Astro dev server (site/)
