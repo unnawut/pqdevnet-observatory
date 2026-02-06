@@ -15,6 +15,7 @@ import argparse
 import hashlib
 import json
 import random
+import shutil
 import sys
 import tempfile
 import time
@@ -79,6 +80,32 @@ def save_manifest(manifest: dict) -> None:
     MANIFEST_PATH.parent.mkdir(parents=True, exist_ok=True)
     with open(MANIFEST_PATH, "w") as f:
         json.dump(manifest, f, indent=2)
+
+
+def prune_manifest(
+    manifest: dict,
+    valid_devnet_ids: set[str],
+    output_dir: Path,
+) -> int:
+    """
+    Remove manifest entries for devnets not in devnets.json.
+
+    Deletes orphaned HTML directories and returns the number of pruned entries.
+    """
+    devnets = manifest.get("devnets", {})
+    orphaned = [did for did in devnets if did not in valid_devnet_ids]
+
+    for devnet_id in orphaned:
+        # Remove HTML directory
+        devnet_dir = output_dir / devnet_id
+        if devnet_dir.exists():
+            shutil.rmtree(devnet_dir)
+            print(f"  PRUNE: removed rendered output for {devnet_id}")
+        else:
+            print(f"  PRUNE: removed manifest entry for {devnet_id} (no directory)")
+        del devnets[devnet_id]
+
+    return len(orphaned)
 
 
 def hash_file(path: Path) -> str:
@@ -420,6 +447,10 @@ def main() -> None:
                     print(f"    {notebook_id}: FAILED")
                     failed.append((devnet_id, notebook_id, result["result"]))
 
+    # Prune manifest entries for devnets no longer in devnets.json
+    valid_ids = set(available_devnet_ids)
+    pruned = prune_manifest(manifest, valid_ids, args.output_dir)
+
     # Update latest devnet
     manifest["latest_devnet"] = latest_devnet
 
@@ -427,7 +458,7 @@ def main() -> None:
     save_manifest(manifest)
 
     print()
-    print(f"Rendered: {success_count}, Skipped: {skip_count}, Failed: {len(failed)}")
+    print(f"Rendered: {success_count}, Skipped: {skip_count}, Failed: {len(failed)}, Pruned: {pruned}")
 
     if failed:
         print("\nFailed renders:")

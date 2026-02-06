@@ -24,6 +24,7 @@ import sys
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from typing import Optional
 
 import pandas as pd
 from dotenv import load_dotenv
@@ -50,6 +51,89 @@ class DevnetIteration:
 def devnet_id_from_timestamp(dt: datetime) -> str:
     """Derive a deterministic devnet ID from its start timestamp."""
     return f"pqdevnet-{dt.strftime('%Y%m%dT%H%MZ')}"
+
+
+def load_existing_devnets(path: Path) -> list[DevnetIteration]:
+    """Load existing devnets from devnets.json, returning DevnetIteration objects."""
+    if not path.exists():
+        return []
+    with open(path) as f:
+        data = json.load(f)
+    return [
+        DevnetIteration(**entry)
+        for entry in data.get("devnets", [])
+    ]
+
+
+def merge_devnets(
+    existing: list[DevnetIteration],
+    detected: list[DevnetIteration],
+    tolerance_minutes: int = 5,
+) -> list[DevnetIteration]:
+    """
+    Merge newly detected devnets with existing ones to maintain stable IDs.
+
+    For each detected devnet, find the closest existing entry within tolerance
+    by start_time. If matched, keep the existing ID and start_time (stability)
+    but update end_time, duration_hours, end_slot, clients, and notes from the
+    fresh detection. Unmatched detected devnets are added as new. Existing
+    devnets not re-detected (historical, outside window) are preserved unless
+    they're shadows of a matched devnet (within tolerance of a matched one).
+    """
+    tolerance = timedelta(minutes=tolerance_minutes)
+
+    def parse_time(iso: str) -> datetime:
+        return datetime.fromisoformat(iso)
+
+    # Track which existing devnets are matched
+    matched_existing: set[str] = set()
+    merged: list[DevnetIteration] = []
+
+    for det in detected:
+        det_start = parse_time(det.start_time)
+
+        # Find closest existing devnet within tolerance
+        best_match: Optional[DevnetIteration] = None
+        best_delta = tolerance + timedelta(seconds=1)
+
+        for ex in existing:
+            ex_start = parse_time(ex.start_time)
+            delta = abs(det_start - ex_start)
+            if delta <= tolerance and delta < best_delta:
+                best_match = ex
+                best_delta = delta
+
+        if best_match is not None:
+            # Keep existing ID and start_time, update everything else
+            matched_existing.add(best_match.id)
+            merged.append(DevnetIteration(
+                id=best_match.id,
+                start_time=best_match.start_time,
+                end_time=det.end_time,
+                duration_hours=det.duration_hours,
+                start_slot=det.start_slot,
+                end_slot=det.end_slot,
+                clients=det.clients,
+                notes=det.notes,
+            ))
+        else:
+            # New devnet, no existing match
+            merged.append(det)
+
+    # Preserve historical devnets not re-detected and not shadows of matched ones
+    merged_starts = [parse_time(d.start_time) for d in merged]
+    for ex in existing:
+        if ex.id in matched_existing:
+            continue
+        ex_start = parse_time(ex.start_time)
+        # Check if this is a shadow of an already-merged devnet
+        is_shadow = any(abs(ex_start - ms) <= tolerance for ms in merged_starts)
+        if not is_shadow:
+            merged.append(ex)
+
+    # Sort by start_time
+    merged.sort(key=lambda d: d.start_time)
+    return merged
 
 
 # Infrastructure containers irrelevant to devnet client analysis
@@ -414,6 +498,11 @@ def main() -> None:
         default=0,
         help="Minimum devnet duration in minutes to include (filters out failed/short runs)",
     )
+    parser.add_argument(
+        "--no-merge",
+        action="store_true",
+        help="Overwrite devnets.json instead of merging with existing entries",
+    )
     args = parser.parse_args()
 
     load_dotenv()
@@ -465,6 +554,21 @@ def main() -> None:
         print("\nNo devnet iterations meet the minimum duration requirement.")
         return
 
+    # Merge with existing devnets to maintain stable IDs
+    output_path = Path(args.output)
+    if not args.no_merge:
+        existing = load_existing_devnets(output_path)
+        if existing:
+            before_count = len(iterations)
+            iterations = merge_devnets(existing, iterations)
+            new_count = len(iterations) - before_count
+            if new_count > 0:
+                print(f"Merged with existing devnets: {new_count} historical preserved")
+            else:
+                print(f"Merged with {len(existing)} existing devnet(s)")
+    else:
+        print("Merge disabled (--no-merge), overwriting devnets.json")
+
     # Print summary
     print(f"\n{'=' * 60}")
     print(f"Detected {len(iterations)} devnet iteration(s):")
@@ -481,7 +585,6 @@ def main() -> None:
             print(f"  Notes: {devnet.notes}")
 
     # Save to file
-    output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     manifest = {
