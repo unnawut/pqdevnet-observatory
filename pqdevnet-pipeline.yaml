@@ -12,33 +12,40 @@ notebooks:
     source: notebooks/pqdevnet/01-pq-signature-performance.ipynb
     order: 1
 
+  - id: 06-aggregation-performance
+    title: Aggregation Performance
+    description: Signature aggregation and leanMultisig proof verification analysis
+    icon: Layers
+    source: notebooks/pqdevnet/06-aggregation-performance.ipynb
+    order: 2
+
   - id: 03-consensus
     title: Consensus
     description: Head slot tracking, justification, and finalization analysis
     icon: Handshake
     source: notebooks/pqdevnet/03-consensus.ipynb
-    order: 2
+    order: 3
 
   - id: 05-state-transitions
     title: State Transitions
     description: State transition processing time percentiles per client
     icon: Timer
     source: notebooks/pqdevnet/05-state-transitions.ipynb
-    order: 3
+    order: 4
 
   - id: 04-networking
     title: Networking
     description: Peer connections, attestation propagation, bandwidth, and reorgs
     icon: Network
     source: notebooks/pqdevnet/04-networking.ipynb
-    order: 4
+    order: 5
 
   - id: 02-resource-utilization
     title: Resource Utilization
     description: CPU, memory, disk I/O, and network throughput per client
     icon: Activity
     source: notebooks/pqdevnet/02-resource-utilization.ipynb
-    order: 5
+    order: 6
 
 # Settings
 settings:
