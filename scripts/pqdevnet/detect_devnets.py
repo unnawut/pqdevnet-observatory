@@ -447,13 +447,33 @@ def fetch_container_clients(
         if container and container not in ("", "POD"):
             containers.add(container)
 
-    # Extract client names (e.g., "lantern_0" -> "lantern")
+    # Keep full container names (e.g., "ream_0", "ream_1") as client identifiers.
+    # Multiple instances of the same implementation are distinct clients.
     clients = set()
     for c in containers:
-        if c in EXCLUDED_CONTAINERS or "_" not in c:
+        if c in EXCLUDED_CONTAINERS:
             continue
-        clients.add(c.rsplit("_", 1)[0])
+        clients.add(c)
     return clients
+
+
+def deduplicate_clients(clients: list[str]) -> list[str]:
+    """
+    Remove bare client names when suffixed versions exist.
+
+    During the transition from unsuffixed job labels (e.g., "ethlambda") to
+    suffixed ones ("ethlambda_0"), both may appear for the same process.
+    Keep only the suffixed version since it's more specific.
+    """
+    import re
+    client_set = set(clients)
+    suffixed_bases = set()
+    for c in client_set:
+        m = re.match(r"^(.+)_(\d+)$", c)
+        if m:
+            suffixed_bases.add(m.group(1))
+    # Drop bare names that have a suffixed counterpart
+    return sorted(c for c in client_set if c not in suffixed_bases)
 
 
 def augment_clients_from_containers(
@@ -466,11 +486,18 @@ def augment_clients_from_containers(
         end = datetime.fromisoformat(iteration.end_time)
         container_clients = fetch_container_clients(prom, start, end)
 
-        merged = sorted(set(iteration.clients) | container_clients)
-        if len(merged) > len(iteration.clients):
-            added = sorted(container_clients - set(iteration.clients))
-            print(f"  {iteration.id}: added {added} from cAdvisor containers")
-            iteration.clients = merged
+        merged = set(iteration.clients) | container_clients
+        deduped = deduplicate_clients(list(merged))
+        if set(deduped) != set(iteration.clients):
+            added = sorted(set(deduped) - set(iteration.clients))
+            removed = sorted(set(iteration.clients) - set(deduped))
+            changes = []
+            if added:
+                changes.append(f"added {added}")
+            if removed:
+                changes.append(f"deduped {removed}")
+            print(f"  {iteration.id}: {', '.join(changes)}")
+            iteration.clients = deduped
 
 
 def main() -> None:
