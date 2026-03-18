@@ -855,6 +855,26 @@ def fetch_query(
     fetcher = query_config["function"]
     df, promql = fetcher(client, start_time, end_time)
 
+    # Normalize client names: during the transition from unsuffixed job labels
+    # (e.g., "ream") to suffixed ones ("ream_0"), both may appear in the same
+    # time range. Rename bare names to their suffixed counterpart when one exists.
+    if "client" in df.columns and not df.empty:
+        import re
+
+        clients = set(df["client"].unique())
+        rename_map = {}
+        suffixed_bases = {}
+        for c in clients:
+            m = re.match(r"^(.+)_(\d+)$", c)
+            if m:
+                suffixed_bases.setdefault(m.group(1), []).append(c)
+        for c in clients:
+            if c in suffixed_bases:
+                # Bare name has suffixed counterparts — merge into _0
+                rename_map[c] = f"{c}_0"
+        if rename_map:
+            df["client"] = df["client"].replace(rename_map)
+
     # Convert to table and add PromQL metadata
     table = pa.Table.from_pandas(df, preserve_index=False)
     existing_metadata = table.schema.metadata or {}
