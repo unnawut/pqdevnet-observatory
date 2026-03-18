@@ -355,14 +355,22 @@ def main() -> None:
             sys.exit(1)
         devnets_to_render = [args.devnet]
 
-    # Check data exists for devnets
+    # Check data exists for devnets. Old devnets beyond Prometheus retention
+    # have Parquet files with 0 rows (~700-950 bytes). We check head_slot.parquet
+    # specifically since it's the core metric all notebooks depend on.
+    # A head_slot.parquet with real data is >2KB; empty ones are <1KB.
+    MIN_DATA_SIZE = 2000  # bytes
     devnets_with_data = []
     for devnet_id in devnets_to_render:
         devnet_dir = DATA_ROOT / devnet_id
-        if devnet_dir.exists() and list(devnet_dir.glob("*.parquet")):
+        if not devnet_dir.exists():
+            print(f"WARNING: No data dir for {devnet_id}, skipping")
+            continue
+        head_slot = devnet_dir / "head_slot.parquet"
+        if head_slot.exists() and head_slot.stat().st_size > MIN_DATA_SIZE:
             devnets_with_data.append(devnet_id)
         else:
-            print(f"WARNING: No data for {devnet_id}, skipping")
+            print(f"WARNING: No head_slot data for {devnet_id}, skipping")
 
     if not devnets_with_data:
         print("No devnets have data. Run 'just fetch-devnet <id>' first.")
