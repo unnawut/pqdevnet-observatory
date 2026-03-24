@@ -340,9 +340,13 @@ def fetch_pq_signature_timing(
 
     Computes p50, p95, p99 for signing and verification times.
     """
+    # Some clients use the old prefix (lean_pq_signature_*), others use the new
+    # (lean_pq_sig_*). Query both and merge under the same metric name.
     histogram_metrics = [
         ("lean_pq_signature_attestation_signing_time_seconds", "signing"),
+        ("lean_pq_sig_attestation_signing_time_seconds", "signing"),
         ("lean_pq_signature_attestation_verification_time_seconds", "verification"),
+        ("lean_pq_sig_attestation_verification_time_seconds", "verification"),
         ("lean_pq_sig_attestation_signatures_building_time_seconds", "agg_building"),
         ("lean_pq_sig_aggregated_signatures_verification_time_seconds", "agg_verification"),
     ]
@@ -376,6 +380,10 @@ def fetch_pq_signature_timing(
                 pass
 
     df = pd.DataFrame(all_rows)
+    # Deduplicate: if both old and new metric names returned data for the same
+    # client/timestamp/quantile, keep only one row.
+    if not df.empty:
+        df = df.drop_duplicates(subset=["client", "metric", "quantile", "timestamp"])
     promql = "histogram_quantile(p50/p95/p99, rate(<pq_sig_timing>_bucket[5m]))"
     return df, promql
 
