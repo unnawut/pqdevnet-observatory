@@ -28,6 +28,10 @@ const formatDevnetShort = (id: string) => {
 
 const currentPath = Astro.url.pathname;
 const base = import.meta.env.BASE_URL;
+
+// Derive which devnet is currently being viewed from the URL
+const devnetMatch = currentPath.match(/\/pqdevnet\/(pqdevnet-[^/]+)/);
+const currentDevnet = devnetMatch ? devnetMatch[1] : latestDevnet;
 ---
 
 <nav class="flex flex-col gap-5">
@@ -112,18 +116,18 @@ const base = import.meta.env.BASE_URL;
     pqDevnetData.hasData && (
       <div class="flex flex-col gap-1">
         <div class="mb-0.5 flex items-center justify-between px-2">
-          <span class="text-muted-foreground text-[0.625rem] font-semibold tracking-wide uppercase">Latest</span>
-          {latestDevnet && (
+          <span class="text-muted-foreground text-[0.625rem] font-semibold tracking-wide uppercase">{currentDevnet === latestDevnet ? 'Latest' : 'Viewing'}</span>
+          {currentDevnet && (
             <span class="bg-muted text-muted-foreground flex items-center gap-1 px-1.5 py-0.5 text-[0.5625rem] font-medium">
-              <span class="bg-accent h-1 w-1 animate-pulse"></span>
-              {formatDevnetShort(latestDevnet)}
+              {currentDevnet === latestDevnet && <span class="bg-accent h-1 w-1 animate-pulse"></span>}
+              {formatDevnetShort(currentDevnet)}
             </span>
           )}
         </div>
         <ul class="m-0 flex list-none flex-col p-0">
           {pqDevnetNotebooks.map((nb) => {
-            const href = `${base}pqdevnet/${latestDevnet}/${nb.id}`;
-            const isActive = currentPath.includes(`/pqdevnet/`) && currentPath.includes(`/${nb.id}`);
+            const href = `${base}pqdevnet/${currentDevnet}/${nb.id}`;
+            const isActive = currentPath.includes(`/pqdevnet/${currentDevnet}/`) && currentPath.endsWith(`/${nb.id}`);
             return (
               <li>
                 <a
