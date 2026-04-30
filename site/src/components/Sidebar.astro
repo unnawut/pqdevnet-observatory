@@ -26,12 +26,24 @@ const formatDevnetShort = (id: string) => {
   return match ? `${match[1]}-${match[2]}-${match[3]}` : id;
 };
 
+const formatDuration = (hours: number) => {
+  if (hours < 1) return `${Math.round(hours * 60)}m`;
+  if (hours < 24) return `${hours.toFixed(1).replace(/\.0$/, '')}h`;
+  return `${(hours / 24).toFixed(1).replace(/\.0$/, '')}d`;
+};
+
 const currentPath = Astro.url.pathname;
 const base = import.meta.env.BASE_URL;
 
 // Derive which devnet is currently being viewed from the URL
 const devnetMatch = currentPath.match(/\/pqdevnet\/(pqdevnet-[^/]+)/);
 const currentDevnet = devnetMatch ? devnetMatch[1] : latestDevnet;
+
+// Max duration across historical devnets for relative bar scaling
+const maxDuration = historicalDevnets.reduce((max, d) => {
+  const h = pqDevnetData.getDevnetInfo(d)?.duration_hours ?? 0;
+  return h > max ? h : max;
+}, 1);
 ---
 
 <nav class="flex flex-col gap-5">
@@ -188,6 +200,7 @@ const currentDevnet = devnetMatch ? devnetMatch[1] : latestDevnet;
           {historicalDevnets.map((devnet) => {
             const href = `${base}pqdevnet/${devnet}`;
             const isActive = currentPath.startsWith(`/pqdevnet/${devnet}`);
+            const info = pqDevnetData.getDevnetInfo(devnet);
             return (
               <li>
                 <a
@@ -195,14 +208,41 @@ const currentDevnet = devnetMatch ? devnetMatch[1] : latestDevnet;
                   class:list={[
                     'group text-muted-foreground relative flex items-center gap-2 px-2 py-1.5 text-[0.8125rem] no-underline transition-all duration-200',
                     "before:bg-primary before:absolute before:top-1/2 before:left-0 before:h-0 before:w-[2px] before:-translate-y-1/2 before:transition-all before:duration-200 before:content-['']",
-                    'hover:text-foreground hover:bg-muted hover:before:h-1/2',
-                    isActive ? 'text-foreground bg-[var(--mauve-4)] font-medium before:!h-[60%]' : '',
+                    'hover:text-foreground hover:bg-muted hover:before:h-[80%]',
+                    isActive ? 'text-foreground bg-[var(--mauve-4)] font-medium before:!h-[80%]' : '',
                   ]}
                 >
                   <span class="group-hover:text-primary flex shrink-0 items-center justify-center opacity-50 transition-all duration-200 group-hover:opacity-100">
                     <Icon name="Box" size={12} />
                   </span>
-                  <span class="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{devnet}</span>
+                  <span class="min-w-0 flex-1 flex flex-col overflow-hidden">
+                    <span class="overflow-hidden text-ellipsis whitespace-nowrap">{devnet}</span>
+                    {info && (
+                      <>
+                        <span class="mt-0.5 flex items-center gap-1.5 leading-none">
+                          <span class="block h-[2px] flex-1 bg-[var(--muted)]">
+                            <span
+                              class="block h-full bg-[var(--accent)]"
+                              style={`width: ${Math.max(2, (info.duration_hours / maxDuration) * 100)}%`}
+                            />
+                          </span>
+                          <span class="text-muted-foreground shrink-0 text-[0.625rem] tabular-nums leading-none opacity-70">
+                            {formatDuration(info.duration_hours)}
+                          </span>
+                        </span>
+                        <span class="mt-px flex items-center gap-1.5 leading-none">
+                          <span class="flex flex-1 items-center gap-[2px]">
+                            {info.clients.map(() => (
+                              <span class="block h-[3px] w-[3px] rounded-full bg-blue-500" />
+                            ))}
+                          </span>
+                          <span class="text-muted-foreground shrink-0 text-[0.625rem] tabular-nums leading-none opacity-70">
+                            {info.clients.length} {info.clients.length === 1 ? 'validator' : 'validators'}
+                          </span>
+                        </span>
+                      </>
+                    )}
+                  </span>
                 </a>
               </li>
             );

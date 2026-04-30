@@ -70,7 +70,7 @@ const formatDevnetDisplay = (id: string) => {
             <dd class="font-medium font-mono">{devnetInfo.start_slot.toLocaleString()} &rarr; {devnetInfo.end_slot.toLocaleString()}</dd>
           </div>
           <div>
-            <dt class="text-muted-foreground font-mono text-xs uppercase tracking-wider">Clients ({devnetInfo.clients.length})</dt>
+            <dt class="text-muted-foreground font-mono text-xs uppercase tracking-wider">Validators ({devnetInfo.clients.length})</dt>
             <dd class="font-medium">{devnetInfo.clients.join(', ')}</dd>
           </div>
         </dl>
